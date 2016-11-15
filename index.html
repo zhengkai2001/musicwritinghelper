@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Writing Helper</title>
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-slider.min.css" rel="stylesheet">
+    <link href="css/mwh.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="container">
+    <hr/>
+
+    <div id="tempoBox">
+        <div class="row">
+            <div class="col-md-12">
+                <button id="play_metronome" type="button" class="btn btn-primary btn-lg">Play</button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <label for="tempo_range">Tempo: <span id="tempo"></span> BPM</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <b>30 </b>
+                <input id="tempo_range" data-slider-id='tempo_slider' type="text"
+                       data-slider-min="30" data-slider-max="160" data-slider-step="1"/>
+                <b> 160</b>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <label for="resolution_selector">Resolution: </label>
+                <select id="resolution_selector">
+                    <option value="sixteenth">16th notes</option>
+                    <option value="eighth">8th notes</option>
+                    <option value="quarter">Quarter notes</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div id="rhythm_canvas_div" class="col-md-12">
+            <canvas id="rhythm_canvas">
+            </canvas>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <p id="record_message">Stopped.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div id="left" class="col-md-6 rhythm_input">
+        </div>
+        <div id="right" class="col-md-6 rhythm_input">
+        </div>
+    </div>
+
+    <div class="row">
+        <div id="notation" class="col-md-12">
+        </div>
+    </div>
+</div>
+
+<script src="js/jquery-3.1.1.min.js"></script>
+<script src="js/tone.min.js"></script>
+<script src="js/queue.min.js"></script>
+<script src="js/metronome.js"></script>
+<script src="js/keymaster.js"></script>
+<script src="js/bootstrap.min.js"></script>
+<script src="js/bootstrap-slider.min.js"></script>
+<script src="js/vexflow-min.js"></script>
+<script src="js/mwh.js"></script>
+
+</body>
+</html>

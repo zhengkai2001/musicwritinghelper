@@ -1,0 +1,28 @@
+.chart {
+    font-size: 10em;
+    width: 300px;
+}
+
+#tempo_slider .slider-selection {
+    background: #BABABA;
+}
+
+#left {
+    background: #bbff99;
+}
+
+#left:hover {
+    background: #44cc00;
+}
+
+#right {
+    background: #ffb366;
+}
+
+#right:hover {
+    background: #ff8c1a;
+}
+
+.rhythm_input {
+    height: 400px;
+}
