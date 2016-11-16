@@ -36,9 +36,17 @@
         </div>
 
         <div class="row">
-            <div class="col-md-12">
+            <div class="col-md-6">
                 <label for="resolution_selector">Resolution: </label>
                 <select id="resolution_selector">
+                    <option value="sixteenth">16th notes</option>
+                    <option value="eighth">8th notes</option>
+                    <option value="quarter">Quarter notes</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label for="precision_selector">Precision: </label>
+                <select id="precision_selector">
                     <option value="sixteenth">16th notes</option>
                     <option value="eighth">8th notes</option>
                     <option value="quarter">Quarter notes</option>
@@ -81,6 +89,7 @@
 <script src="js/bootstrap.min.js"></script>
 <script src="js/bootstrap-slider.min.js"></script>
 <script src="js/vexflow-min.js"></script>
+<script src="js/FileSaver.min.js"></script>
 <script src="js/mwh.js"></script>
 
 </body>
