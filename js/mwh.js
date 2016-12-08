@@ -2,7 +2,9 @@ var quarterBeatLength;
 var barLength;
 var inputTimes;
 var rhythm;
+
 var rhythmBars;
+var rhythmStrBars;
 
 var VF = Vex.Flow;
 
@@ -14,6 +16,13 @@ var precisionSelector = $('#precision_selector');
 var precision;
 
 var restsString;
+
+var bar = $('#hint_bar');
+var hint = $('#hint_span');
+
+var stopHint = 'Stopped. Press "1" to START recording!';
+var preparingHint = 'Be prepared!';
+var recordingHint = 'Now recording... Press "1" to stop.';
 
 $(document).ready(function () {
     $('#tempo_input').keyup(function (event) {
@@ -27,6 +36,27 @@ $(document).ready(function () {
         event.preventDefault();
     });
 
+    // if visit from computer, hide touch input area
+    // http://stackoverflow.com/questions/5899783/detect-safari-using-jquery
+    var is_chrome = navigator.userAgent.indexOf('Chrome') > -1;
+    var is_firefox = navigator.userAgent.indexOf('Firefox') > -1;
+    var is_safari = navigator.userAgent.indexOf("Safari") > -1;
+    var is_opera = navigator.userAgent.toLowerCase().indexOf("op") > -1;
+    if ((is_chrome) && (is_safari)) {
+        is_safari = false;
+    }
+    if ((is_chrome) && (is_opera)) {
+        is_chrome = false;
+    }
+
+    if (!is_safari && (is_chrome || is_firefox)) {
+        $('#mobile_input').remove();
+    }
+
+    // initialize hint bar
+    hint.text(stopHint);
+    bar.css('width', '0%');
+
     tempoSlider.on('input', function () {
         tempo = this.value;
         $('#tempo_input').val(tempo);
@@ -34,8 +64,8 @@ $(document).ready(function () {
 
     initMetronome();
     tempoSlider.slider('setValue', tempo, true, true);
-    resolutionSelector.val('eighth').trigger('change');
-    precisionSelector.val('eighth').trigger('change');
+    resolutionSelector.val('quarter').trigger('change');
+    precisionSelector.val('sixteenth').trigger('change');
 
     drawStaves();
 });
@@ -59,6 +89,7 @@ tempoSlider.change(function () {
 resolutionSelector.change(function () {
     var noteResolutionValue = $(this).val();
     setNoteResolution(noteResolutionValue);
+    $(this).focusout();
 });
 
 precisionSelector.change(function () {
@@ -82,39 +113,144 @@ $('#play_metronome').click(function () {
     $(this).text(playOrStopMetronome());
 });
 
-function startRecording() {
-    if (!recording) {
-        recording = true;
+$('#button_export').click(function () {
+    var content = generateXML();
+    var blob = new Blob([content], {type: "text/plain;charset=utf-8"});
+    saveAs(blob, "Export.xml");
+});
 
-        $('#record_message').text('Recording...');
-        inputTimes = [];
-        playMetronome();
+function generateXML() {
+    var start = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?><!DOCTYPE score-partwise PUBLIC '-//Recordare//DTD MusicXML 2.0 Partwise//EN' 'http://www.musicxml.org/dtds/2.0/partwise.dtd'><score-partwise version=\"2.0\"><movement-title>MusicWritingHelper Export</movement-title><identification><encoding><encoding-date>2016-12-01</encoding-date><software>Guitar Pro 6</software></encoding></identification><part-list><score-part id=\"P0\"><part-name>Electric Guitar</part-name><part-abbreviation>E-Gt</part-abbreviation><midi-instrument id=\"P0\"><midi-channel>1</midi-channel><midi-bank>1</midi-bank><midi-program>28</midi-program><volume>80</volume><pan>0</pan></midi-instrument></score-part></part-list><part id=\"P0\"><measure number=\"0\"><attributes><divisions>4</divisions><key><fifths>0</fifths><mode>major</mode></key><time><beats>4</beats><beat-type>4</beat-type></time><clef><sign>TAB</sign><line>5</line></clef><staff-details><staff-lines>6</staff-lines><staff-tuning line=\"1\"><tuning-step>E</tuning-step><tuning-octave>2</tuning-octave></staff-tuning><staff-tuning line=\"2\"><tuning-step>A</tuning-step><tuning-octave>2</tuning-octave></staff-tuning><staff-tuning line=\"3\"><tuning-step>D</tuning-step><tuning-octave>3</tuning-octave></staff-tuning><staff-tuning line=\"4\"><tuning-step>G</tuning-step><tuning-octave>3</tuning-octave></staff-tuning><staff-tuning line=\"5\"><tuning-step>B</tuning-step><tuning-octave>3</tuning-octave></staff-tuning><staff-tuning line=\"6\"><tuning-step>E</tuning-step><tuning-octave>4</tuning-octave></staff-tuning></staff-details><transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>0</octave-change></transpose></attributes><direction directive=\"yes\" placement=\"above\"><direction-type><metronome default-y=\"40\" parentheses=\"yes\"><beat-unit>quarter</beat-unit><per-minute></per-minute></metronome></direction-type><sound tempo=\"\"/></direction>";
+
+    start = start.replace('<per-minute></per-minute>', '<per-minute>' + tempo + '</per-minute>');
+    start = start.replace('<sound tempo=\"\"/>', '<sound tempo="' + tempo + '"/>');
+
+    var content = '';
+
+    if (rhythmBars.length > 0) {
+        for (var ri = 0; ri < rhythmBars.length; ri++) {
+            if (ri != 0) {
+                content += "<measure number=\"" + ri + "\"><attributes><divisions>4</divisions><clef><sign>TAB</sign><line>5</line></clef></attributes>"
+            }
+
+            var rhythmBar = rhythmBars[ri];
+
+            if (rhythmBar.length == 1) {
+                // full rest
+                content += '<note><rest/><duration>4</duration><voice>1</voice><type>whole</type></note>';
+            } else {
+                for (var i = 0; i < rhythmBar.length; i++) {
+                    var note = rhythmBar[i];
+                    var parts = note.split("/");
+
+                    var duration = parts[1];
+                    var durationStr1, durationStr2;
+                    if (duration === '16') {
+                        durationStr1 = 2;
+                        durationStr2 = '16th';
+                    } else if (duration === '8') {
+                        durationStr1 = 2;
+                        durationStr2 = 'eighth';
+                    } else if (duration === '4') {
+                        durationStr1 = 2;
+                        durationStr2 = 'quarter';
+                    } else if (duration === '2') {
+                        durationStr1 = 2;
+                        durationStr2 = 'half';
+                    } else {
+                        durationStr1 = 4;
+                        durationStr2 = 'whole';
+                    }
+
+                    if (parts.length === 3) {
+                        // rest
+                        // <note><rest/><duration>3</duration><voice>1</voice><type>eighth</type><dot/></note>
+                        content += '<note><rest/><duration>' + durationStr1 + '</duration><voice>1</voice><type>' + durationStr2 + '</type>';
+                        if (parts[2].includes('.')) {
+                            content += '<dot/>';
+                        }
+                        content += '</note>';
+
+                    } else {
+                        // note
+                        // '<note><pitch><step>G</step><octave>3</octave></pitch><duration>4</duration><voice>1</voice><type>quarter</type><stem>up</stem><notations><technical><string>4</string><fret>5</fret></technical></notations></note>'
+                        content += '<note><pitch><step>G</step><octave>3</octave></pitch><duration>' + durationStr1 + '</duration><voice>1</voice><type>' + durationStr2 + '</type><stem>up</stem><notations><technical><string>4</string><fret>5</fret></technical></notations>';
+                        if (parts[1].includes('.')) {
+                            content += '<dot/>';
+                        }
+                        content += '</note>';
+                    }
+                }
+            }
+
+            content += '</measure>';
+        }
+    }
+
+
+    var end = '</part></score-partwise>';
+    return start + content + end;
+}
+
+// bars for preparation before actual recording
+var preparationBarNumber = 1;
+var preparationTime;
+
+function startRecording() {
+    recording = true;
+
+    bar.addClass('notransition');
+    hint.text(preparingHint + ' The first ' + preparationBarNumber + ' bar(s) is(are) for you to catch up with the tempo.');
+
+    preparationTime = 60 / tempo * 4 * preparationBarNumber * 1000;
+
+    var progressBarWidth = 0;
+    var id = setInterval(function () {
+        if (progressBarWidth > 100) {
+            clearInterval(id);
+            hint.text(recordingHint);
+        } else {
+            progressBarWidth++;
+            bar.css('width', progressBarWidth + '%');
+        }
+    }, preparationTime / 100);
+
+    inputTimes = [];
+
+    playMetronome();
+}
+
+function endRecording() {
+    recording = false;
+
+    // enable animation
+    // barDiv.css('transition', 'none');
+    bar.removeClass('notransition');
+    bar.css('width', '0%');
+    hint.text(stopHint);
+
+    stopMetronome();
+
+    if (inputTimes.length !== 0) {
+        console.log('inputTimes: ' + inputTimes.toString());
+        calculateRhythm();
+        console.log('rhythm: ' + rhythm.toString());
+        generateNotes();
+        console.log('rhythmStrBars: ' + rhythmStrBars.toString());
+        drawNotation(rhythmStrBars);
+    }
+}
+
+function startOrStopRecording() {
+    if (recording) {
+        endRecording();
+    } else {
+        startRecording();
     }
 }
 
 function pauseOrResumeRecording() {
-    var message = pauseOrResumeMetronome();
-    if (typeof message === 'string') {
-        $('#record_message').text(message);
-    }
-}
-
-function endRecording() {
-    if (recording) {
-        recording = false;
-
-        $('#record_message').text('Stopped.');
-        stopMetronome();
-
-        if (inputTimes.length !== 0) {
-            console.log(inputTimes.toString());
-            calculateRhythm();
-            console.log(rhythm.toString());
-            generateNotes();
-            console.log(rhythmBars.toString());
-            drawNotation(rhythmBars);
-        }
-    }
+    pauseOrResumeMetronome();
 }
 
 function diff(time1, time2) {
@@ -129,8 +265,9 @@ function calculateRhythm() {
     rhythm = [];
 
     // all time in millisecond
-    // startTime: ignore the first bar (it is for user to get along the beats)
-    var startTime = firstBeatTime + 60 / tempo * 4 * 1000;
+    // startTime: ignore the first "preparationBarNumber" bar(s)
+    // they are for user to get along the beats
+    var startTime = firstBeatTime + preparationTime;
     var endTime = lastBeatTime;
     var timePerBeat;
 
@@ -250,6 +387,7 @@ function calculateRhythm() {
 
 function generateNotes() {
     rhythmBars = [];
+    rhythmStrBars = [];
 
     var bar = [];
     var barI = 0;
@@ -260,9 +398,15 @@ function generateNotes() {
 
         if (beat >= (barI + 1) * precision) {
             if (bar.length === 0) {
-                rhythmBars.push(restsString);
+                rhythmBars.push([restsString]);
+                rhythmStrBars.push(restsString);
+
             } else {
-                rhythmBars.push(generateBar(bar));
+                var rhythmBar = generateBar(bar);
+                rhythmBars.push(rhythmBar);
+
+                var rhythmBarStr = rhythmBar.join(',');
+                rhythmStrBars.push(rhythmBarStr);
                 bar = [];
             }
 
@@ -272,36 +416,86 @@ function generateNotes() {
         bar.push(beat % precision);
     }
 
-    rhythmBars.push(generateBar(bar));
-}
+    rhythmBar = generateBar(bar);
+    rhythmBars.push(rhythmBar);
 
-function makeBar(bar) {
-    bar[0] = bar[0].slice(0, 2) + '/' + precision + bar[0].slice(2);
-    return bar.join(',');
+    rhythmBarStr = rhythmBar.join(',');
+    rhythmStrBars.push(rhythmBarStr);
 }
 
 function generateBar(bar) {
     console.log("bar: " + bar.toString());
+
     // 'B4/16/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r, B4/r'
     var rhythmBar = [];
 
     for (var ni = 0, ri = 0; ri < bar.length; ri++) {
         for (var i = ni; i < bar[ri]; i++) {
-            rhythmBar.push('B4/r');
+            rhythmBar.push('B4/' + precision + '/r');
         }
         ni = bar[ri] + 1;
-        rhythmBar.push('G4');
+        rhythmBar.push('G4/' + precision);
     }
 
     if (bar.length != 0) {
         for (i = bar[bar.length - 1] + 1; i < precision; i++) {
-            rhythmBar.push('B4/r');
+            rhythmBar.push('B4/' + precision + '/r');
         }
     }
 
-    var rhythmBarString = makeBar(rhythmBar);
-    console.log("rhythmBar: " + rhythmBarString);
-    return rhythmBarString;
+    // merge rest notes, to give the score a better look
+    if (precision == 16) {
+        var mergedRhythmBar = [];
+        for (i = 0; i < rhythmBar.length;) {
+            if (isRest(rhythmBar[i])) {
+                if (i % 4 < 3 && i + 1 < rhythmBar.length && isRest(rhythmBar[i + 1])) {
+                    if (i % 4 < 2 && i + 2 < rhythmBar.length && isRest(rhythmBar[i + 2])) {
+                        if (i % 4 == 0 && i + 3 < rhythmBar.length && isRest(rhythmBar[i + 3])) {
+                            mergedRhythmBar.push('B4/4/r');
+                            i += 4;
+                        } else {
+                            mergedRhythmBar.push('B4/8/r.');
+                            i += 3;
+                        }
+                    } else {
+                        mergedRhythmBar.push('B4/8/r');
+                        i += 2;
+                    }
+                } else {
+                    mergedRhythmBar.push(rhythmBar[i]);
+                    i++;
+                }
+            } else {
+                mergedRhythmBar.push(rhythmBar[i]);
+                i++;
+            }
+        }
+        rhythmBar = mergedRhythmBar;
+
+    } else if (precision == 8) {
+        mergedRhythmBar = [];
+        for (i = 0; i < rhythmBar.length;) {
+            if (i % 2 == 0 && isRest(rhythmBar[i])) {
+                if (i + 1 < rhythmBar.length && isRest(rhythmBar[i + 1])) {
+                    mergedRhythmBar.push('B4/4/r');
+                    i += 2;
+                } else {
+                    mergedRhythmBar.push('B4/8/r');
+                    i++
+                }
+            } else {
+                mergedRhythmBar.push(rhythmBar[i]);
+                i++;
+            }
+        }
+        rhythmBar = mergedRhythmBar;
+    }
+
+    return rhythmBar;
+}
+
+function isRest(note) {
+    return note.includes('r');
 }
 
 function recordTimePoint() {
@@ -352,7 +546,11 @@ for (var i = 0; i < keys.length; i++) {
 
 // start recording
 key('1', function () {
-    startRecording();
+    // if (!recording) {
+    //     startRecording();
+    // }
+
+    startOrStopRecording()
 });
 
 // pause recording
@@ -361,9 +559,11 @@ key('2', function () {
 });
 
 // stop recording
-key('3', function () {
-    endRecording();
-});
+// key('3', function () {
+//     if (recording) {
+//         endRecording();
+//     }
+// });
 
 $('#left').mouseenter(function () {
     if (recording && !paused) {
@@ -391,16 +591,21 @@ function makeSystem(width) {
 }
 
 function drawStaves() {
-    var rests = [];
-    for (var i = 0; i < precision; i++) {
-        rests.push('B4/r');
-    }
-    restsString = makeBar(rests);
+    // var rests = [];
+    // for (var i = 0; i < precision; i++) {
+    //     rests.push('B4/16/r');
+    // }
+    // restsString = rests.join(',');
+    restsString = 'B4/1/r';
     drawNotation([restsString, restsString, restsString]);
 }
 
+var notationDiv = $('#notation');
+
 function drawNotation(bars) {
-    $('#notation').empty();
+    notationDiv.empty();
+
+    var width = notationDiv.width();
 
     var registry = new VF.Registry();
     VF.Registry.enableDefaultRegistry(registry);
@@ -409,44 +614,40 @@ function drawNotation(bars) {
         renderer: {
             selector: 'notation',
             backend: VF.Renderer.Backends.SVG,
-            width: 1100,
+            width: width,
             height: 900
         }
     });
+
+    var firstBarExtraLength = 50;
+    var barLength = (width - firstBarExtraLength) / 3;
 
     var score = vf.EasyScore({throwOnError: true});
     score.set({time: '4/4'});
 
     var voice = score.voice.bind(score);
     var notes = score.notes.bind(score);
-    var beam = score.beam.bind(score);
 
     x = 0;
     y = 0;
-    var barLength = 40 + precision * 20;
 
-    if (bars[0]) {
-        var system = makeSystem(barLength + 60);
-        var stave = new VF.Stave();
+    var barsArrayLength = bars.length;
+    if (barsArrayLength > 0) {
+        var system = makeSystem(barLength + firstBarExtraLength);
         system.addStave({voices: [voice(notes(bars[0]))]})
             .addClef('treble').addKeySignature('C').addTimeSignature('4/4');
-    }
-    if (bars[1]) {
-        system = makeSystem(barLength);
-        system.addStave({voices: [voice(notes(bars[1]))]});
-    }
-    if (bars[2]) {
-        system = makeSystem(barLength);
-        system.addStave({voices: [voice(notes(bars[2]))]});
-    }
 
-    // new line
-    // x = 0;
-    // y += 120;
-    //
-    // system = makeSystem(barLength);
-    // system.addStave({voices: [voice(notes(bars[3]))]})
-    //     .addClef('treble').addKeySignature('C');
+        for (var i = 1; i < barsArrayLength; i++) {
+            if (i % 3 == 0) {
+                x = 0;
+                y += 120;
+                system = makeSystem(barLength + firstBarExtraLength);
+            } else {
+                system = makeSystem(barLength);
+            }
+            system.addStave({voices: [voice(notes(bars[i]))]});
+        }
+    }
 
     vf.draw();
 }

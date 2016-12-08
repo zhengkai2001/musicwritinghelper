@@ -4,7 +4,7 @@
 }
 
 #tempo_slider .slider-selection {
-    background: #BABABA;
+    background: #dcdcdc;
 }
 
 #left {
@@ -25,4 +25,34 @@
 
 .rhythm_input {
     height: 400px;
+}
+
+#div_hint_bar {
+    position: relative;
+    width: 100%;
+    height: 50px;
+    background-color: #dcdcdc;
+    text-align: center;
+    font-size: 25px;
+}
+
+#hint_bar {
+    position: absolute;
+    width: 1%;
+    height: 100%;
+    background-color: #44cc00;
+}
+
+#hint_span {
+    position: absolute;
+    right: 0;
+    left: 0;
+}
+
+/* for turning off progress bar's transition*/
+.notransition {
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+    transition: none !important;
 }

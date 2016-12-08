@@ -14,11 +14,11 @@
     <hr/>
 
     <div id="tempoBox">
-        <div class="row">
-            <div class="col-md-12">
-                <button id="play_metronome" type="button" class="btn btn-primary btn-lg">Play</button>
-            </div>
-        </div>
+        <!--<div class="row">-->
+            <!--<div class="col-md-12">-->
+                <!--<button id="play_metronome" type="button" class="btn btn-primary btn-lg">Play</button>-->
+            <!--</div>-->
+        <!--</div>-->
 
         <div class="row">
             <div class="col-md-12">
@@ -37,7 +37,7 @@
 
         <div class="row">
             <div class="col-md-6">
-                <label for="resolution_selector">Resolution: </label>
+                <label for="resolution_selector">Metronome Resolution: </label>
                 <select id="resolution_selector">
                     <option value="sixteenth">16th notes</option>
                     <option value="eighth">8th notes</option>
@@ -56,19 +56,25 @@
     </div>
 
     <div class="row">
-        <div id="rhythm_canvas_div" class="col-md-12">
-            <canvas id="rhythm_canvas">
-            </canvas>
+        <div class="col-md-12">
+            <div id="rhythm_canvas_div">
+                <canvas id="rhythm_canvas">
+                </canvas>
+            </div>
         </div>
     </div>
 
     <div class="row">
         <div class="col-md-12">
-            <p id="record_message">Stopped.</p>
+            <div id="div_hint_bar" class="progress">
+                <div id="hint_bar" class="progress-bar progress-bar-success progress-bar-striped" role="progressbar">
+                </div>
+                <span id="hint_span"></span>
+            </div>
         </div>
     </div>
 
-    <div class="row">
+    <div class="row" id="mobile_input">
         <div id="left" class="col-md-6 rhythm_input">
         </div>
         <div id="right" class="col-md-6 rhythm_input">
@@ -76,6 +82,9 @@
     </div>
 
     <div class="row">
+        <div class="col-md-12">
+            <button id="button_export" type="button" class="btn btn-primary btn-lg">Export</button>
+        </div>
         <div id="notation" class="col-md-12">
         </div>
     </div>

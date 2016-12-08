@@ -52,6 +52,9 @@ function setTempo(tempoValue) {
 
 function setNoteResolution(noteResolutionValue) {
     noteResolution = noteResolutionValue;
+    if (!playing) {
+        drawDefault();
+    }
 }
 
 function scheduler() {
@@ -121,7 +124,6 @@ function stopMetronome() {
 function pauseOrResumeMetronome() {
     if (playing) {
         paused ? resumeMetronome() : pauseMetronome();
-        return paused ? 'Paused.' : 'Recording...'
     }
 }
 
@@ -153,7 +155,22 @@ function resizeCanvas() {
 
 function drawRhythm(note) {
     canvasContext.clearRect(0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < 16; i++) {
+
+    var step;
+    switch (noteResolution) {
+        case 'quarter':
+            step = 4;
+            break;
+        case 'eighth':
+            step = 2;
+            break;
+        case 'sixteenth':
+        default:
+            step = 1;
+            break;
+    }
+
+    for (var i = 0; i < 16; i += step) {
         canvasContext.fillStyle = (note === i) ? ((note % 4 === 0) ? 'red' : 'blue') : 'black';
         canvasContext.fillRect(sideLength * (i + 1), sideLength / 2, sideLength / 2, sideLength / 2);
     }
