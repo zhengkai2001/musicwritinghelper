@@ -69,7 +69,6 @@ function scheduler() {
             || (noteResolution == 'quarter' && !(current16thNote % 4))) {
 
             var oscillator = audioContext.createOscillator();
-
             oscillator.connect(audioContext.destination);
             oscillator.frequency.value = beatPitch[current16thNote];
             oscillator.start(nextNoteTime);

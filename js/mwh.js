@@ -509,6 +509,10 @@ for (var i = 0; i < keys.length; i++) {
     key(keys.charAt(i), function () {
         if (recording) {
             recordTimePoint();
+            bar.css('background-color', '#2a8000');
+            var restoreColor = setTimeout(function () {
+                bar.css('background-color', '#44cc00');
+            }, 100);
         }
     });
 }
