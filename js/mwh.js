@@ -200,7 +200,12 @@ function startRecording() {
     recording = true;
 
     bar.addClass('notransition');
-    hint.text(preparingHint + ' The first ' + preparationBarNumber + ' bar(s) is(are) for you to catch up with the tempo.');
+    if (preparationBarNumber == 1) {
+        hint.text(preparingHint + ' The first bar is for you to catch up with the tempo.');
+    } else {
+        // preparationBarNumber > 1
+        hint.text(preparingHint + ' The first ' + preparationBarNumber + ' bars are for you to catch up with the tempo.');
+    }
 
     preparationTime = 60 / tempo * 4 * preparationBarNumber * 1000;
 
